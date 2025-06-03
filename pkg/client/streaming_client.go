@@ -82,7 +82,7 @@ func (c *StreamingClient) Call() error {
 	case serviceinfo.StreamingClient:
 		return c.handleClientStreaming(ctx)
 	case serviceinfo.StreamingNone:
-		return c.handleUnaryStreaming(ctx)
+		return c.handlePingPong(ctx)
 	default:
 		return errors.New(errors.ClientError, "Unsupported streaming mode: %v", mt.StreamingMode)
 	}
@@ -335,8 +335,8 @@ func (c *StreamingClient) handleBidirectionalStreaming(ctx context.Context) erro
 	return nil
 }
 
-// handleUnaryStreaming handles unary streaming calls
-func (c *StreamingClient) handleUnaryStreaming(ctx context.Context) error {
+// handlePingPong handles ping-pong (non-streaming) calls
+func (c *StreamingClient) handlePingPong(ctx context.Context) error {
 	// Get request data using ioStream
 	reqData, err := c.stream.Recv()
 	if err != nil && err != io.EOF {
@@ -344,7 +344,7 @@ func (c *StreamingClient) handleUnaryStreaming(ctx context.Context) error {
 	}
 	c.Req = reqData
 
-	// For unary streaming, we use the regular GenericCall
+	// For ping-pong, we use the regular GenericCall
 	resp, err := c.Client.GenericCall(ctx, c.Conf.Method, c.Req)
 	if err != nil {
 		// Handle Biz error
